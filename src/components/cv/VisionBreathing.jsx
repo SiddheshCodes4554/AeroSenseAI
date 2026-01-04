@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Webcam from 'react-webcam';
 import { Pose, POSE_CONNECTIONS } from '@mediapipe/pose';
 import { drawConnectors, drawLandmarks } from '@mediapipe/drawing_utils';
@@ -288,20 +289,30 @@ const VisionBreathing = ({ onClose, onComplete }) => {
         }
     };
 
-    return (
-        <div className="fixed inset-0 z-[100] bg-black text-white flex flex-col">
-            {/* Header */}
-            <div className="absolute top-0 left-0 w-full p-6 flex justify-between items-start z-20">
-                <div className="glass px-4 py-2 rounded-full flex items-center gap-3">
-                    <Activity className="text-secondary" />
+    return createPortal(
+        <div className="fixed inset-0 z-[100] bg-black flex flex-col md:flex-row h-screen w-screen overflow-hidden overscroll-none touch-none">
+            {/* Sidebar / Topbar for Mobile */}
+            <div className="md:w-80 w-full bg-neutral-900 border-b md:border-b-0 md:border-r border-white/10 flex md:flex-col items-center justify-between p-6 z-20 shrink-0">
+                <div className="flex items-center gap-4">
+                    <div className={`p-3 rounded-xl transition-colors ${status === 'initializing' ? 'bg-amber-500/20 text-amber-500' : 'bg-primary/20 text-primary'}`}>
+                        <Activity size={24} />
+                    </div>
                     <div>
-                        <div className="text-[10px] uppercase tracking-widest text-white/60">Smart Coach</div>
-                        <div className="font-bold">{score.toFixed(0)}% Harmony</div>
+                        <h2 className="font-bold text-white">Smart Coach</h2>
+                        <div className="text-xs font-mono text-white/50 flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                            LIVE C.V.
+                        </div>
                     </div>
                 </div>
 
-                <div className="glass px-4 py-2 rounded-full">
+                <div className="glass px-4 py-2 rounded-full hidden md:block">
                     <span className="font-mono text-xl font-bold">Reps: {reps}/{TARGET_REPS}</span>
+                </div>
+
+                {/* Mobile Rep Counter */}
+                <div className="md:hidden glass px-3 py-1 rounded-full">
+                    <span className="font-mono text-sm font-bold">{reps}/{TARGET_REPS}</span>
                 </div>
 
                 <button
@@ -318,6 +329,7 @@ const VisionBreathing = ({ onClose, onComplete }) => {
                     ref={webcamRef}
                     mirrored
                     className="absolute inset-0 w-full h-full object-cover opacity-50"
+                    playsInline
                 />
                 <canvas
                     ref={canvasRef}
@@ -325,19 +337,19 @@ const VisionBreathing = ({ onClose, onComplete }) => {
                 />
 
                 {/* HUD Overlay */}
-                <div className="relative z-10 flex flex-col items-center justify-center text-center p-8">
+                <div className="relative z-10 flex flex-col items-center justify-center text-center p-8 w-full max-w-lg mx-auto">
                     <AnimatePresence mode="wait">
                         <motion.div
-                            key={currentExercise} // REMOVED feedback to stop flickering
+                            key={currentExercise}
                             initial={{ opacity: 0, scale: 0.8 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 1.1 }}
-                            className="bg-black/40 backdrop-blur-md p-8 rounded-3xl border border-white/10 flex flex-col items-center"
+                            className="bg-black/40 backdrop-blur-md p-6 md:p-8 rounded-3xl border border-white/10 flex flex-col items-center w-full shadow-2xl"
                         >
-                            <h2 className="text-5xl font-black uppercase tracking-tighter mb-4">
+                            <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mb-4 text-white">
                                 {currentExercise}
                             </h2>
-                            <div className="text-xl font-medium text-secondary">
+                            <div className="text-lg md:text-xl font-medium text-secondary mb-4">
                                 {feedback}
                             </div>
 
@@ -348,14 +360,14 @@ const VisionBreathing = ({ onClose, onComplete }) => {
                                         setStatus('exercise_1');
                                         setReps(0);
                                     }}
-                                    className="mt-6 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-bold text-white/60 hover:text-white transition-colors border border-white/5"
+                                    className="mt-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-bold text-white/60 hover:text-white transition-colors border border-white/5"
                                 >
                                     Skip Calibration
                                 </button>
                             )}
 
                             {/* Debug Info */}
-                            <div className="mt-4 text-[10px] font-mono text-white/40 bg-black/50 p-2 rounded">
+                            <div className="mt-4 text-[10px] font-mono text-white/40 bg-black/50 p-2 rounded max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
                                 DEBUG: {debugInfo}
                             </div>
                         </motion.div>
@@ -365,8 +377,8 @@ const VisionBreathing = ({ onClose, onComplete }) => {
 
             {/* Completion Screen */}
             {status === 'completed' && (
-                <div className="absolute inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-8">
-                    <CheckCircle className="text-primary mb-6" size={64} />
+                <div className="absolute inset-0 z-50 bg-black/95 flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-500">
+                    <CheckCircle className="text-primary mb-6 animate-bounce" size={64} />
                     <h2 className="text-4xl font-bold mb-2">Session Complete</h2>
                     <p className="text-white/60 mb-8">Your breathing harmony score</p>
                     <div className="text-8xl font-black text-primary mb-8">{score.toFixed(0)}%</div>
@@ -378,7 +390,8 @@ const VisionBreathing = ({ onClose, onComplete }) => {
                     </button>
                 </div>
             )}
-        </div>
+        </div>,
+        document.body
     );
 };
 
