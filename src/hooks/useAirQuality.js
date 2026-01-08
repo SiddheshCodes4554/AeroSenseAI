@@ -158,7 +158,7 @@ export const useAirQuality = () => {
         };
 
         load();
-        interval = setInterval(load, 600000);
+        interval = setInterval(load, 90000);
 
         return () => clearInterval(interval);
     }, [coordinates]);
